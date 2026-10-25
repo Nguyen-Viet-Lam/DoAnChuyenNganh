@@ -12,6 +12,19 @@ enum Role {
   ADMIN
 }
 
+enum NovelStatus {
+  DRAFT
+  ONGOING
+  COMPLETED
+}
+
+enum ChapterStatus {
+  DRAFT
+  TRANSLATING
+  TRANSLATED
+  PUBLISHED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -22,5 +35,69 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  novels       Novel[]
+
   @@map("users")
 }
+
+model Genre {
+  id          String       @id @default(uuid())
+  name        String       @unique
+  slug        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  novels      NovelGenre[]
+
+  @@map("genres")
+}
+
+model Novel {
+  id             String       @id @default(uuid())
+  title          String
+  originalTitle  String?
+  author         String?
+  description    String?      @db.Text
+  coverUrl       String?
+  sourceLanguage String       @default("zh")
+  targetLanguage String       @default("vi")
+  status         NovelStatus  @default(ONGOING)
+  uploaderId     String
+  uploader       User         @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  genres         NovelGenre[]
+  chapters       Chapter[]
+
+  @@map("novels")
+}
+
+model NovelGenre {
+  novelId String
+  genreId String
+  novel   Novel  @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([novelId, genreId])
+  @@map("novel_genres")
+}
+
+model Chapter {
+  id                String        @id @default(uuid())
+  novelId           String
+  novel             Novel         @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  chapterNumber     Int
+  title             String
+  originalContent   String        @db.Text
+  translatedContent String?       @db.Text
+  status            ChapterStatus @default(DRAFT)
+  wordCount         Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([novelId, chapterNumber])
+  @@map("chapters")
+}
+
