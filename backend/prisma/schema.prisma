@@ -21,8 +21,17 @@ enum NovelStatus {
 enum ChapterStatus {
   DRAFT
   TRANSLATING
+  PARTIAL
   TRANSLATED
+  FAILED
   PUBLISHED
+}
+
+enum SegmentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 model User {
@@ -36,6 +45,7 @@ model User {
   updatedAt    DateTime @updatedAt
 
   novels       Novel[]
+  aiUsageLogs  AiUsageLog[]
 
   @@map("users")
 }
@@ -94,6 +104,8 @@ model Chapter {
   translatedContent String?       @db.Text
   status            ChapterStatus @default(DRAFT)
   wordCount         Int           @default(0)
+  translationStyle  String?
+  segments          ChapterSegment[]
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -101,3 +113,34 @@ model Chapter {
   @@map("chapters")
 }
 
+
+model ChapterSegment {
+  id             String        @id @default(uuid())
+  chapterId      String
+  chapter        Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  orderIndex     Int
+  originalText   String        @db.Text
+  translatedText String?       @db.Text
+  status         SegmentStatus @default(PENDING)
+  errorMessage   String?
+  attempts       Int           @default(0)
+  needsReview    Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@unique([chapterId, orderIndex])
+  @@map("chapter_segments")
+}
+
+model AiUsageLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapterId String?
+  segmentId String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("ai_usage_logs")
+}
