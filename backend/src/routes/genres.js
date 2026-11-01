@@ -1,6 +1,6 @@
 const express = require('express');
 const prisma = require('../prismaClient');
-const { authenticate, authorizeRole } = require('../middleware/auth');
+const { authenticate, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
 });
 
 // Tạo thể loại mới (chỉ Admin)
-router.post('/', authenticate, authorizeRole('ADMIN'), async (req, res) => {
+router.post('/', authenticate, requireAdmin, async (req, res) => {
   const { name, slug, description } = req.body;
 
   if (!name || !slug) {
