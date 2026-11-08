@@ -34,6 +34,15 @@ enum SegmentStatus {
   FAILED
 }
 
+enum TermCategory {
+  CHARACTER
+  LOCATION
+  SKILL
+  ITEM
+  REALM
+  OTHER
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -80,6 +89,7 @@ model Novel {
 
   genres         NovelGenre[]
   chapters       Chapter[]
+  glossaryTerms  GlossaryTerm[]
 
   @@map("novels")
 }
@@ -144,3 +154,20 @@ model AiUsageLog {
   @@index([userId, createdAt])
   @@map("ai_usage_logs")
 }
+
+model GlossaryTerm {
+  id             String       @id @default(uuid())
+  novelId        String
+  novel          Novel        @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  originalTerm   String
+  vietnameseTerm String
+  category       TermCategory @default(CHARACTER)
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([novelId, originalTerm])
+  @@index([novelId, category])
+  @@map("glossary_terms")
+}
+
