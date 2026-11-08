@@ -11,11 +11,20 @@ const MAX_CHAPTER_CHARS = Number(process.env.AI_MAX_CHAPTER_CHARS) || 50000;
 const STALE_TRANSLATING_MS = 5 * 60 * 1000;
 
 const novelSelect = {
+  id: true,
   uploaderId: true,
   title: true,
   sourceLanguage: true,
   targetLanguage: true,
   description: true,
+  glossaryTerms: {
+    select: {
+      originalTerm: true,
+      vietnameseTerm: true,
+      category: true,
+      notes: true,
+    },
+  },
 };
 
 const canEdit = (novel, user) => novel.uploaderId === user.sub || user.role === 'ADMIN';
@@ -37,12 +46,23 @@ async function translateSegment(segment, chapter, userId, style) {
     data: { status: 'PROCESSING', attempts: { increment: 1 }, errorMessage: null },
   });
   try {
+    // Tự động lọc các thuật ngữ liên quan xuất hiện trong đoạn gốc
+    const relevantGlossary = (chapter.novel?.glossaryTerms || []).filter((term) => {
+      if (!term.originalTerm) return false;
+      if (chapter.novel.sourceLanguage === 'en') {
+        const regex = new RegExp(`\\b${term.originalTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        return regex.test(segment.originalText);
+      }
+      return segment.originalText.includes(term.originalTerm);
+    });
+
     const translated = await translateChapterText({
       text: segment.originalText,
       sourceLang: chapter.novel.sourceLanguage,
       targetLang: chapter.novel.targetLanguage,
       style,
       context: `Truyện: ${chapter.novel.title}. ${chapter.novel.description || ''}`,
+      glossary: relevantGlossary,
     });
     await prisma.chapterSegment.update({
       where: { id: segment.id },

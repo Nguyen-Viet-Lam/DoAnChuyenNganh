@@ -108,6 +108,7 @@ function splitIntoSegments(text, maxChars = Number(process.env.AI_SEGMENT_MAX_CH
  * @param {string} params.targetLang Ngôn ngữ đích (mặc định 'vi')
  * @param {string} [params.style] modern | natural | ancient | wuxia | xianxia
  * @param {string} [params.context] Ngữ cảnh truyện
+ * @param {Array} [params.glossary] Bảng thuật ngữ [{ originalTerm, vietnameseTerm, category, notes }]
  * @returns {Promise<string>} Nội dung đã dịch
  */
 async function translateChapterText({
@@ -116,6 +117,7 @@ async function translateChapterText({
   targetLang = 'vi',
   style = DEFAULT_STYLE,
   context = '',
+  glossary = [],
 }) {
   const ai = getGeminiClient();
 
@@ -129,13 +131,23 @@ async function translateChapterText({
   const toLang = langNames[targetLang] || targetLang;
   const styleGuide = STYLE_GUIDES[style] || STYLE_GUIDES[DEFAULT_STYLE];
 
+  let glossarySection = '';
+  if (Array.isArray(glossary) && glossary.length > 0) {
+    const lines = glossary.map(
+      (g) => `- "${g.originalTerm}" -> "${g.vietnameseTerm}" (${g.category}${g.notes ? ': ' + g.notes : ''})`
+    );
+    glossarySection = `\nBẢNG THUẬT NGỮ BẮT BUỘC TUÂN THỦ:
+${lines.join('\n')}
+(Yêu cầu: Dịch chuẩn xác các tên riêng/thuật ngữ trên đúng từ điển, bảo đảm sự nhất quán trong toàn bộ câu chuyện).\n`;
+  }
+
   const prompt = `Bạn là một dịch giả tiểu thuyết chuyên nghiệp. Hãy dịch văn bản sau từ ${fromLang} sang ${toLang}.
 Yêu cầu:
 - Phong cách dịch: ${styleGuide}.
 - Bản dịch phải mượt mà, mang văn phong tiểu thuyết, không dịch thô kiểu máy móc.
 - Giữ nguyên cấu trúc phân đoạn, lời thoại nhân vật và ngữ điệu phù hợp.
 ${context ? `- Ngữ cảnh truyện: ${context}` : ''}
-
+${glossarySection}
 Nội dung gốc:
 ${text}
 

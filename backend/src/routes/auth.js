@@ -80,4 +80,68 @@ router.get('/me', authenticate, async (req, res) => {
   });
 });
 
+// Cập nhật thông tin cá nhân (displayName)
+router.put('/profile', authenticate, async (req, res) => {
+  const { displayName } = req.body;
+  if (!displayName || !displayName.trim()) {
+    return res.status(400).json({ message: 'Vui lòng cung cấp tên hiển thị hợp lệ' });
+  }
+
+  try {
+    const updated = await prisma.user.update({
+      where: { id: req.user.sub },
+      data: { displayName: displayName.trim() },
+      select: {
+        id: true,
+        email: true,
+        displayName: true,
+        role: true,
+        updatedAt: true,
+      },
+    });
+
+    return res.json({
+      message: 'Cập nhật thông tin cá nhân thành công',
+      data: updated,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Lỗi khi cập nhật thông tin cá nhân', error: error.message });
+  }
+});
+
+// Đổi mật khẩu
+router.put('/change-password', authenticate, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ message: 'Vui lòng cung cấp mật khẩu cũ và mật khẩu mới' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.sub } });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    const isValid = await bcrypt.compare(oldPassword, user.passwordHash);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Mật khẩu hiện tại không chính xác' });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash },
+    });
+
+    return res.json({ message: 'Đổi mật khẩu thành công' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Lỗi khi đổi mật khẩu', error: error.message });
+  }
+});
+
 module.exports = router;
