@@ -8,6 +8,7 @@ const chapterRoutes = require('./routes/chapters');
 const aiRoutes = require('./routes/ai');
 const translationRoutes = require('./routes/translation');
 const glossaryRoutes = require('./routes/glossary');
+const editorRoutes = require('./routes/editor');
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/api', chapterRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api', translationRoutes);
 app.use('/api', glossaryRoutes);
+app.use('/api/editor', editorRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'NovelVerse AI Backend API is running' });
