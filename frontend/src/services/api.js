@@ -42,7 +42,11 @@ export const novelApi = {
 
 export const authApi = {
   login: (email, password) => api.post('/auth/login', { email, password }),
+  register: (email, password, displayName) => api.post('/auth/register', { email, password, displayName }),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (displayName) => api.put('/auth/profile', { displayName }),
+  changePassword: (oldPassword, newPassword) => api.put('/auth/change-password', { oldPassword, newPassword }),
 };
 
 export default api;
+
