@@ -119,3 +119,4 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
     </aside>
   );
 }
+
