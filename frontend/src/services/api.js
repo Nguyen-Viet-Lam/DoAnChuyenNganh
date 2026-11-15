@@ -49,4 +49,3 @@ export const authApi = {
 };
 
 export default api;
-
