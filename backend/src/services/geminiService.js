@@ -5,8 +5,11 @@ const getGeminiClient = () => {
   if (!apiKey) {
     throw new Error('Chưa cấu hình GEMINI_API_KEY trong biến môi trường');
   }
-  return new GoogleGenAI({ apiKey });
+  const timeout = Number(process.env.GEMINI_TIMEOUT_MS) || 60000;
+  return new GoogleGenAI({ apiKey, httpOptions: { timeout } });
 };
+
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 const STYLE_GUIDES = {
   modern: 'hiện đại: câu văn gọn, đời thường, từ ngữ đương đại',
@@ -158,7 +161,7 @@ Chỉ trả về nội dung đã dịch, không kèm lời giải thích hay ghi
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: GEMINI_MODEL,
         contents: prompt,
       });
       const output = (response.text || '').trim();
@@ -181,7 +184,7 @@ Chỉ trả về nội dung đã dịch, không kèm lời giải thích hay ghi
 async function testGeminiConnection() {
   const ai = getGeminiClient();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: GEMINI_MODEL,
     contents: 'Xin chào, hãy trả lời ngắn gọn: Sẵn sàng hỗ trợ NovelVerse AI.',
   });
   return response.text;
