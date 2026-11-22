@@ -5,7 +5,7 @@ const CATEGORY_MAP = {
   CHARACTER: { label: 'Nhân vật', icon: User, color: 'text-blue-600 bg-blue-50 border-blue-200' },
   LOCATION: { label: 'Địa danh', icon: MapPin, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
   SKILL: { label: 'Chiêu thức', icon: Zap, color: 'text-amber-600 bg-amber-50 border-amber-200' },
-  ITEM: { label: 'Pháp bảo/Vật phẩm', icon: Shield, color: 'text-purple-600 bg-purple-50 border-purple-200' },
+  ITEM: { label: 'Pháp bảo/Vật phẩm', icon: Shield, color: 'text-cyan-700 bg-cyan-50 border-cyan-200' },
   REALM: { label: 'Cảnh giới', icon: Sparkles, color: 'text-rose-600 bg-rose-50 border-rose-200' },
   OTHER: { label: 'Khác', icon: Tag, color: 'text-slate-600 bg-slate-50 border-slate-200' },
 };
@@ -23,7 +23,7 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
   });
 
   return (
-    <aside className="w-80 bg-white border-l border-slate-200 flex flex-col h-[calc(100vh-73px)] sticky top-[73px] shadow-sm z-20">
+    <aside className="sticky top-[153px] z-20 flex h-[calc(100vh-153px)] w-80 flex-col border-l border-slate-200 bg-white shadow-sm">
       {/* Header */}
       <div className="p-4 border-b border-slate-200 flex items-center justify-between">
         <div>
@@ -33,7 +33,8 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
         <button
           type="button"
           onClick={onClose}
-          className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg"
+          aria-label="Đóng bảng thuật ngữ"
+          className="min-h-11 min-w-11 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
         >
           <X className="w-4 h-4" />
         </button>
@@ -48,7 +49,7 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
             placeholder="Tìm từ gốc hoặc từ dịch..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="w-full rounded-lg border border-slate-200 py-2.5 pl-8 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
         <div className="flex gap-1 overflow-x-auto pb-1 text-[11px] scrollbar-thin">
@@ -57,7 +58,7 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
             onClick={() => setSelectedCategory('ALL')}
             className={`px-2 py-0.5 rounded-full whitespace-nowrap transition-colors ${
               selectedCategory === 'ALL'
-                ? 'bg-indigo-600 text-white font-medium'
+                ? 'bg-blue-700 text-white font-medium'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
@@ -70,7 +71,7 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
               onClick={() => setSelectedCategory(key)}
               className={`px-2 py-0.5 rounded-full whitespace-nowrap transition-colors ${
                 selectedCategory === key
-                  ? 'bg-indigo-600 text-white font-medium'
+                  ? 'bg-blue-700 text-white font-medium'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -91,7 +92,7 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
             return (
               <div
                 key={term.id || term.originalTerm}
-                className="p-2.5 rounded-lg border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 transition-all text-xs"
+                className="rounded-lg border border-slate-200 p-2.5 text-xs transition-all hover:border-blue-300 hover:bg-blue-50/30"
               >
                 <div className="flex items-center justify-between mb-1">
                   <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium border ${cat.color}`}>
@@ -102,14 +103,14 @@ export default function GlossarySidebar({ glossary = [], onClose, onInsertTerm }
                     <button
                       type="button"
                       onClick={() => onInsertTerm(term.vietnameseTerm)}
-                      className="text-[10px] text-indigo-600 hover:underline"
+                      className="min-h-11 text-[10px] text-blue-700 hover:underline"
                     >
                       Dán vào bản dịch
                     </button>
                   )}
                 </div>
                 <div className="font-semibold text-slate-800">{term.originalTerm}</div>
-                <div className="text-indigo-600 font-medium">➔ {term.vietnameseTerm}</div>
+                <div className="font-medium text-blue-700">→ {term.vietnameseTerm}</div>
                 {term.notes && <div className="text-[11px] text-slate-400 mt-1 italic">{term.notes}</div>}
               </div>
             );

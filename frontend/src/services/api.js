@@ -18,6 +18,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/login')) {
+      localStorage.removeItem('token');
+      window.dispatchEvent(new CustomEvent('novelverse:session-expired'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const editorApi = {
   // Lấy dữ liệu chương & các đoạn phục vụ editor
   getChapterEditor: (chapterId) => api.get(`/editor/chapters/${chapterId}/editor`),
@@ -33,11 +44,31 @@ export const editorApi = {
 
   // Hoàn tất biên tập toàn chương
   completeReview: (chapterId, force = false) => api.post(`/editor/chapters/${chapterId}/complete-review`, { force }),
+
+  runQa: (chapterId) => api.post(`/editor/chapters/${chapterId}/qa/run`),
+  getQa: (chapterId) => api.get(`/editor/chapters/${chapterId}/qa`),
+  ignoreQaIssue: (issueId) => api.put(`/editor/qa-issues/${issueId}/ignore`),
+  restoreQaIssue: (issueId) => api.put(`/editor/qa-issues/${issueId}/restore`),
+  translateChapter: (chapterId, style = 'natural', resegment = false) => (
+    api.post(`/chapters/${chapterId}/translate`, { style, resegment })
+  ),
 };
 
 export const novelApi = {
   getNovels: (params) => api.get('/novels', { params }),
+  getMyNovels: () => api.get('/novels/mine'),
   getNovel: (id) => api.get(`/novels/${id}`),
+  createNovel: (data) => api.post('/novels', data),
+  updateNovel: (id, data) => api.put(`/novels/${id}`, data),
+  deleteNovel: (id) => api.delete(`/novels/${id}`),
+};
+
+export const chapterApi = {
+  getChapters: (novelId) => api.get(`/novels/${novelId}/chapters`),
+  getChapter: (id) => api.get(`/chapters/${id}`),
+  createChapter: (novelId, data) => api.post(`/novels/${novelId}/chapters`, data),
+  updateChapter: (id, data) => api.put(`/chapters/${id}`, data),
+  deleteChapter: (id) => api.delete(`/chapters/${id}`),
 };
 
 export const authApi = {
@@ -46,6 +77,7 @@ export const authApi = {
   getMe: () => api.get('/auth/me'),
   updateProfile: (displayName) => api.put('/auth/profile', { displayName }),
   changePassword: (oldPassword, newPassword) => api.put('/auth/change-password', { oldPassword, newPassword }),
+  logout: () => api.post('/auth/logout'),
 };
 
 export default api;

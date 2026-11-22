@@ -50,8 +50,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         setError('Vui lòng điền đầy đủ các trường thông tin');
         return;
       }
-      if (formData.password.length < 6) {
-        setError('Mật khẩu phải chứa ít nhất 6 ký tự');
+      if (formData.password.length < 8) {
+        setError('Mật khẩu phải chứa ít nhất 8 ký tự');
         return;
       }
       if (formData.password !== formData.confirmPassword) {
@@ -81,7 +81,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-200 overflow-hidden relative">
         {/* Header decoration */}
-        <div className="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 p-6 text-white text-center relative">
+        <div className="relative bg-slate-950 p-6 text-center text-white">
           <button
             type="button"
             onClick={onClose}
@@ -90,10 +90,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <X className="w-4 h-4" />
           </button>
           <div className="w-12 h-12 mx-auto mb-2 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 shadow-inner">
-            <Sparkles className="w-6 h-6 text-indigo-200" />
+            <Sparkles className="w-6 h-6 text-blue-300" />
           </div>
           <h2 className="text-xl font-bold tracking-tight">NovelVerse AI</h2>
-          <p className="text-xs text-indigo-100 mt-1">
+          <p className="mt-1 text-xs text-slate-300">
             {isLogin ? 'Đăng nhập để dịch và quản lý các dự án tiểu thuyết' : 'Tạo tài khoản dịch giả mới'}
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               setError('');
             }}
             className={`flex-1 py-3 text-center transition-colors border-b-2 ${
-              isLogin ? 'border-indigo-600 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'
+              isLogin ? 'border-blue-700 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             Đăng Nhập
@@ -119,7 +119,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               setError('');
             }}
             className={`flex-1 py-3 text-center transition-colors border-b-2 ${
-              !isLogin ? 'border-indigo-600 text-indigo-600 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'
+              !isLogin ? 'border-blue-700 text-blue-700 bg-white' : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             Đăng Ký
@@ -146,7 +146,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   value={formData.displayName}
                   onChange={handleChange}
                   placeholder="Ví dụ: Nguyễn Viết Lãm"
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="min-h-11 w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="name@example.com"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="min-h-11 w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -177,7 +177,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••••"
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="min-h-11 w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="••••••••"
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="min-h-11 w-full rounded-xl border border-slate-200 py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 mt-2 bg-indigo-600 hover:bg-indigo-700 active:scale-98 text-white text-sm font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-indigo-200 disabled:opacity-60"
+            className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 py-2.5 text-sm font-semibold text-white transition-all hover:bg-blue-800 active:translate-y-px disabled:opacity-60"
           >
             {loading ? (
               <span className="flex items-center gap-2">

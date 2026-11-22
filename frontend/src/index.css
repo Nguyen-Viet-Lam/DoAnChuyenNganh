@@ -9,3 +9,30 @@ body {
   background-color: #f8fafc;
   color: #0f172a;
 }
+
+.wrap {
+  width: min(100% - 2rem, 80rem);
+  margin-inline: auto;
+}
+
+:where(button, a, input, textarea, select):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-160%);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
