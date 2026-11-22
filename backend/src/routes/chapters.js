@@ -1,9 +1,9 @@
 const express = require('express');
 const prisma = require('../prismaClient');
 const { authenticate } = require('../middleware/auth');
-const { translateChapterText } = require('../services/geminiService');
 
 const router = express.Router({ mergeParams: true });
+const CHAPTER_STATUSES = new Set(['DRAFT', 'TRANSLATING', 'PARTIAL', 'TRANSLATED', 'REVIEWED', 'FAILED', 'PUBLISHED']);
 
 // Helper đếm số từ
 function countWords(str) {
@@ -12,7 +12,7 @@ function countWords(str) {
 }
 
 // Lấy danh sách chương của một tiểu thuyết
-router.get('/novels/:novelId/chapters', async (req, res) => {
+router.get('/novels/:novelId/chapters', authenticate, async (req, res) => {
   const { novelId } = req.params;
 
   try {
@@ -23,6 +23,9 @@ router.get('/novels/:novelId/chapters', async (req, res) => {
 
     if (!novel) {
       return res.status(404).json({ message: 'Không tìm thấy tiểu thuyết' });
+    }
+    if (novel.uploaderId !== req.user.sub && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Bạn không có quyền xem danh sách chương của truyện này' });
     }
 
     const chapters = await prisma.chapter.findMany({
@@ -46,7 +49,7 @@ router.get('/novels/:novelId/chapters', async (req, res) => {
 });
 
 // Lấy nội dung chi tiết một chương
-router.get('/chapters/:id', async (req, res) => {
+router.get('/chapters/:id', authenticate, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -68,6 +71,9 @@ router.get('/chapters/:id', async (req, res) => {
     if (!chapter) {
       return res.status(404).json({ message: 'Không tìm thấy chương' });
     }
+    if (chapter.novel.uploaderId !== req.user.sub && req.user.role !== 'ADMIN') {
+      return res.status(403).json({ message: 'Bạn không có quyền xem chương này' });
+    }
 
     return res.json({ data: chapter });
   } catch (error) {
@@ -82,6 +88,12 @@ router.post('/novels/:novelId/chapters', authenticate, async (req, res) => {
 
   if (!title || !originalContent) {
     return res.status(400).json({ message: 'Vui lòng cung cấp tiêu đề và nội dung gốc của chương' });
+  }
+  if (chapterNumber !== undefined && (!Number.isInteger(Number(chapterNumber)) || Number(chapterNumber) < 1)) {
+    return res.status(400).json({ message: 'Số chương phải là số nguyên dương' });
+  }
+  if (!CHAPTER_STATUSES.has(status)) {
+    return res.status(400).json({ message: 'Trạng thái chương không hợp lệ' });
   }
 
   try {
@@ -109,9 +121,9 @@ router.post('/novels/:novelId/chapters', authenticate, async (req, res) => {
     const chapter = await prisma.chapter.create({
       data: {
         novelId,
-        chapterNumber: targetChapterNumber,
-        title,
-        originalContent,
+        chapterNumber: Number(targetChapterNumber),
+        title: title.trim(),
+        originalContent: originalContent.trim(),
         translatedContent,
         status,
         wordCount,
@@ -132,6 +144,13 @@ router.put('/chapters/:id', authenticate, async (req, res) => {
   const { id } = req.params;
   const { chapterNumber, title, originalContent, translatedContent, status } = req.body;
 
+  if (chapterNumber !== undefined && (!Number.isInteger(Number(chapterNumber)) || Number(chapterNumber) < 1)) {
+    return res.status(400).json({ message: 'Số chương phải là số nguyên dương' });
+  }
+  if (status !== undefined && !CHAPTER_STATUSES.has(status)) {
+    return res.status(400).json({ message: 'Trạng thái chương không hợp lệ' });
+  }
+
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id },
@@ -147,8 +166,8 @@ router.put('/chapters/:id', authenticate, async (req, res) => {
     }
 
     const updateData = {};
-    if (chapterNumber !== undefined) updateData.chapterNumber = chapterNumber;
-    if (title !== undefined) updateData.title = title;
+    if (chapterNumber !== undefined) updateData.chapterNumber = Number(chapterNumber);
+    if (title !== undefined) updateData.title = String(title).trim();
     if (originalContent !== undefined) {
       updateData.originalContent = originalContent;
       updateData.wordCount = countWords(originalContent);
@@ -193,4 +212,4 @@ router.delete('/chapters/:id', authenticate, async (req, res) => {
   }
 });
 
-module.exports = router;module.exports = router;
+module.exports = router;
