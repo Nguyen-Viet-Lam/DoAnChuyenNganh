@@ -82,6 +82,6 @@ CI chạy đúng bốn cổng kiểm tra trên. Kiểm thử API tích hợp c�
 
 ## Sinh viên thực hiện
 
-- Nguyễn Việt Lâm
+- Nguyễn Viết Lãm
 - MSSV: 2380601183
 - Lớp: 23DTHC6
