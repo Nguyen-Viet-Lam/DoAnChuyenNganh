@@ -29,7 +29,7 @@ export const editorApi = {
   toggleReview: (segmentId) => api.put(`/editor/segments/${segmentId}/toggle-review`),
 
   // Dịch lại riêng đoạn đang chọn
-  retranslateSegment: (segmentId, style) => api.post(`/editor/segments/${segmentId}/retranslate`, { style }),
+  retranslateSegment: (segmentId, style) => api.post(`/segments/${segmentId}/retranslate`, { style }),
 
   // Hoàn tất biên tập toàn chương
   completeReview: (chapterId, force = false) => api.post(`/editor/chapters/${chapterId}/complete-review`, { force }),
