@@ -110,7 +110,7 @@ router.put('/profile', authenticate, async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi cập nhật thông tin cá nhân', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi cập nhật thông tin cá nhân' });
   }
 });
 
@@ -145,7 +145,7 @@ router.put('/change-password', authenticate, async (req, res) => {
 
     return res.json({ message: 'Đổi mật khẩu thành công' });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi đổi mật khẩu', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi đổi mật khẩu' });
   }
 });
 

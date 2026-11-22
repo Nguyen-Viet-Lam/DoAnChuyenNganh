@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
     });
     return res.json({ data: genres });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại' });
   }
 });
 
@@ -41,7 +41,7 @@ router.post('/', authenticate, requireAdmin, async (req, res) => {
 
     return res.status(201).json({ message: 'Tạo thể loại thành công', data: genre });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tạo thể loại', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tạo thể loại' });
   }
 });
 

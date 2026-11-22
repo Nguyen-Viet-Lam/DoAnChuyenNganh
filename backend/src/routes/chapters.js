@@ -44,7 +44,7 @@ router.get('/novels/:novelId/chapters', authenticate, async (req, res) => {
 
     return res.json({ data: chapters });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải danh sách chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải danh sách chương' });
   }
 });
 
@@ -77,7 +77,7 @@ router.get('/chapters/:id', authenticate, async (req, res) => {
 
     return res.json({ data: chapter });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết chương' });
   }
 });
 
@@ -135,7 +135,7 @@ router.post('/novels/:novelId/chapters', authenticate, async (req, res) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ message: `Chương số ${chapterNumber} đã tồn tại trong truyện này` });
     }
-    return res.status(500).json({ message: 'Lỗi khi tạo chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tạo chương' });
   }
 });
 
@@ -154,7 +154,10 @@ router.put('/chapters/:id', authenticate, async (req, res) => {
   try {
     const chapter = await prisma.chapter.findUnique({
       where: { id },
-      include: { novel: { select: { uploaderId: true } } },
+      include: {
+        novel: { select: { uploaderId: true } },
+        _count: { select: { segments: true } },
+      },
     });
 
     if (!chapter) {
@@ -163,6 +166,15 @@ router.put('/chapters/:id', authenticate, async (req, res) => {
 
     if (chapter.novel.uploaderId !== req.user.sub && req.user.role !== 'ADMIN') {
       return res.status(403).json({ message: 'Bạn không có quyền chỉnh sửa chương này' });
+    }
+    if (
+      originalContent !== undefined
+      && originalContent.trim() !== chapter.originalContent.trim()
+      && chapter._count.segments > 0
+    ) {
+      return res.status(409).json({
+        message: 'Không thể đổi nội dung gốc sau khi đã chia đoạn. Hãy dùng chức năng chia lại khi dịch chương.',
+      });
     }
 
     const updateData = {};
@@ -182,7 +194,7 @@ router.put('/chapters/:id', authenticate, async (req, res) => {
 
     return res.json({ message: 'Cập nhật chương thành công', data: updated });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi cập nhật chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi cập nhật chương' });
   }
 });
 
@@ -208,7 +220,7 @@ router.delete('/chapters/:id', authenticate, async (req, res) => {
 
     return res.json({ message: 'Đã xóa chương thành công' });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xóa chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xóa chương' });
   }
 });
 

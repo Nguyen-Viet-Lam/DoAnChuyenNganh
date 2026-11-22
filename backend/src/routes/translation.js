@@ -97,7 +97,7 @@ router.get('/translation/usage', authenticate, async (req, res) => {
     const used = await usedToday(req.user.sub);
     return res.json({ data: { used, limit: DAILY_LIMIT, remaining: Math.max(DAILY_LIMIT - used, 0) } });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải thống kê lượt gọi AI', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải thống kê lượt gọi AI' });
   }
 });
 
@@ -115,7 +115,7 @@ router.get('/chapters/:id/segments', authenticate, async (req, res) => {
     });
     return res.json({ chapterStatus: chapter.status, progress: summarizeSegments(segments), data: segments });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải các đoạn dịch', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải các đoạn dịch' });
   }
 });
 
@@ -211,7 +211,7 @@ router.post('/chapters/:id/translate', authenticate, async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xử lý dịch chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xử lý dịch chương' });
   }
 });
 
@@ -244,7 +244,7 @@ router.post('/segments/:id/retranslate', authenticate, async (req, res) => {
     }
     return res.json({ message: 'Đã dịch lại đoạn', data: fresh });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi dịch lại đoạn', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi dịch lại đoạn' });
   }
 });
 

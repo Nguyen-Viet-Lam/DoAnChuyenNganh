@@ -78,7 +78,7 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải danh sách tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải danh sách tiểu thuyết' });
   }
 });
 
@@ -148,7 +148,7 @@ router.get('/:id', async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết tiểu thuyết' });
   }
 });
 
@@ -207,7 +207,7 @@ router.post('/', authenticate, async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tạo tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tạo tiểu thuyết' });
   }
 });
 
@@ -284,7 +284,7 @@ router.put('/:id', authenticate, async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi cập nhật tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi cập nhật tiểu thuyết' });
   }
 });
 
@@ -306,7 +306,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 
     return res.json({ message: 'Đã xóa tiểu thuyết thành công' });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xóa tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xóa tiểu thuyết' });
   }
 });
 

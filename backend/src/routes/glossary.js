@@ -73,7 +73,7 @@ router.get('/novels/:novelId/glossary', async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải bảng thuật ngữ', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải bảng thuật ngữ' });
   }
 });
 
@@ -126,7 +126,9 @@ router.post('/novels/:novelId/glossary', authenticate, async (req, res) => {
       data: term,
     });
   } catch (error) {
-    return res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({
+      message: error.status ? error.message : 'Không thể thêm thuật ngữ',
+    });
   }
 });
 
@@ -176,7 +178,7 @@ router.post('/novels/:novelId/glossary/batch', authenticate, async (req, res) =>
         });
         created.push(term);
       } catch (err) {
-        skipped.push({ item, reason: err.message });
+        skipped.push({ item, reason: 'Không thể lưu thuật ngữ' });
       }
     }
 
@@ -188,7 +190,9 @@ router.post('/novels/:novelId/glossary/batch', authenticate, async (req, res) =>
       skipped,
     });
   } catch (error) {
-    return res.status(error.status || 500).json({ message: error.message });
+    return res.status(error.status || 500).json({
+      message: error.status ? error.message : 'Không thể nhập danh sách thuật ngữ',
+    });
   }
 });
 
@@ -211,7 +215,7 @@ router.get('/glossary/:id', async (req, res) => {
 
     return res.json({ data: term });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết thuật ngữ', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết thuật ngữ' });
   }
 });
 
@@ -261,7 +265,7 @@ router.put('/glossary/:id', authenticate, async (req, res) => {
     if (error.code === 'P2002') {
       return res.status(409).json({ message: 'Từ gốc này đã tồn tại trong bộ truyện' });
     }
-    return res.status(500).json({ message: 'Lỗi khi cập nhật thuật ngữ', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi cập nhật thuật ngữ' });
   }
 });
 
@@ -287,7 +291,7 @@ router.delete('/glossary/:id', authenticate, async (req, res) => {
 
     return res.json({ message: 'Đã xóa thuật ngữ thành công' });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xóa thuật ngữ', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xóa thuật ngữ' });
   }
 });
 
