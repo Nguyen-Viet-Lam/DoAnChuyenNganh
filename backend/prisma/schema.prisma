@@ -44,6 +44,17 @@ enum TermCategory {
   OTHER
 }
 
+enum QaIssueType {
+  EMPTY_TRANSLATION
+  TOO_SHORT
+  GLOSSARY_MISMATCH
+}
+
+enum QaSeverity {
+  ERROR
+  WARNING
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -54,43 +65,43 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  novels       Novel[]
-  aiUsageLogs  AiUsageLog[]
+  novels      Novel[]
+  aiUsageLogs AiUsageLog[]
 
   @@map("users")
 }
 
 model Genre {
-  id          String       @id @default(uuid())
-  name        String       @unique
-  slug        String       @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
   description String?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  novels      NovelGenre[]
+  novels NovelGenre[]
 
   @@map("genres")
 }
 
 model Novel {
-  id             String       @id @default(uuid())
+  id             String      @id @default(uuid())
   title          String
   originalTitle  String?
   author         String?
-  description    String?      @db.Text
+  description    String?     @db.Text
   coverUrl       String?
-  sourceLanguage String       @default("zh")
-  targetLanguage String       @default("vi")
-  status         NovelStatus  @default(ONGOING)
+  sourceLanguage String      @default("zh")
+  targetLanguage String      @default("vi")
+  status         NovelStatus @default(ONGOING)
   uploaderId     String
-  uploader       User         @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  uploader       User        @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
-  genres         NovelGenre[]
-  chapters       Chapter[]
-  glossaryTerms  GlossaryTerm[]
+  genres        NovelGenre[]
+  chapters      Chapter[]
+  glossaryTerms GlossaryTerm[]
 
   @@map("novels")
 }
@@ -106,38 +117,39 @@ model NovelGenre {
 }
 
 model Chapter {
-  id                String        @id @default(uuid())
+  id                String               @id @default(uuid())
   novelId           String
-  novel             Novel         @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novel             Novel                @relation(fields: [novelId], references: [id], onDelete: Cascade)
   chapterNumber     Int
   title             String
-  originalContent   String        @db.Text
-  translatedContent String?       @db.Text
-  status            ChapterStatus @default(DRAFT)
-  wordCount         Int           @default(0)
+  originalContent   String               @db.Text
+  translatedContent String?              @db.Text
+  status            ChapterStatus        @default(DRAFT)
+  wordCount         Int                  @default(0)
   translationStyle  String?
   segments          ChapterSegment[]
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  qaIssues          TranslationQaIssue[]
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
 
   @@unique([novelId, chapterNumber])
   @@map("chapters")
 }
 
-
 model ChapterSegment {
-  id             String        @id @default(uuid())
+  id             String               @id @default(uuid())
   chapterId      String
-  chapter        Chapter       @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapter        Chapter              @relation(fields: [chapterId], references: [id], onDelete: Cascade)
   orderIndex     Int
-  originalText   String        @db.Text
-  translatedText String?       @db.Text
-  status         SegmentStatus @default(PENDING)
+  originalText   String               @db.Text
+  translatedText String?              @db.Text
+  status         SegmentStatus        @default(PENDING)
   errorMessage   String?
-  attempts       Int           @default(0)
-  needsReview    Boolean       @default(false)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  attempts       Int                  @default(0)
+  needsReview    Boolean              @default(false)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  qaIssues       TranslationQaIssue[]
 
   @@unique([chapterId, orderIndex])
   @@map("chapter_segments")
@@ -157,18 +169,40 @@ model AiUsageLog {
 }
 
 model GlossaryTerm {
-  id             String       @id @default(uuid())
+  id             String               @id @default(uuid())
   novelId        String
-  novel          Novel        @relation(fields: [novelId], references: [id], onDelete: Cascade)
+  novel          Novel                @relation(fields: [novelId], references: [id], onDelete: Cascade)
   originalTerm   String
   vietnameseTerm String
-  category       TermCategory @default(CHARACTER)
+  category       TermCategory         @default(CHARACTER)
   notes          String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  qaIssues       TranslationQaIssue[]
 
   @@unique([novelId, originalTerm])
   @@index([novelId, category])
   @@map("glossary_terms")
 }
 
+model TranslationQaIssue {
+  id             String         @id @default(uuid())
+  chapterId      String
+  chapter        Chapter        @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  segmentId      String
+  segment        ChapterSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  glossaryTermId String?
+  glossaryTerm   GlossaryTerm?  @relation(fields: [glossaryTermId], references: [id], onDelete: SetNull)
+  type           QaIssueType
+  severity       QaSeverity
+  message        String
+  fingerprint    String
+  ignored        Boolean        @default(false)
+  ignoredAt      DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([segmentId, fingerprint])
+  @@index([chapterId, ignored, severity])
+  @@map("translation_qa_issues")
+}

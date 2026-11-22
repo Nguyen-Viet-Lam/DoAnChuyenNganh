@@ -2,6 +2,8 @@ const express = require('express');
 const prisma = require('../prismaClient');
 const { authenticate } = require('../middleware/auth');
 const { translateChapterText, splitIntoSegments, STYLE_GUIDES } = require('../services/geminiService');
+const { refreshChapter, summarizeSegments } = require('../services/chapterStateService');
+const { runQaForChapter } = require('../services/qaService');
 
 const router = express.Router();
 
@@ -84,43 +86,6 @@ async function translateSegment(segment, chapter, userId, style) {
   }
 }
 
-// Tính lại trạng thái chương và gộp bản dịch theo đúng thứ tự đoạn
-async function refreshChapter(chapterId) {
-  const segments = await prisma.chapterSegment.findMany({
-    where: { chapterId },
-    orderBy: { orderIndex: 'asc' },
-  });
-  const done = segments.filter((s) => s.status === 'COMPLETED');
-
-  let status;
-  if (segments.length > 0 && done.length === segments.length) status = 'TRANSLATED';
-  else if (done.length > 0) status = 'PARTIAL';
-  else if (segments.some((s) => s.status === 'FAILED')) status = 'FAILED';
-  else status = 'DRAFT';
-
-  return prisma.chapter.update({
-    where: { id: chapterId },
-    data: {
-      status,
-      translatedContent: done.length ? done.map((s) => s.translatedText).join('\n\n') : null,
-    },
-  });
-}
-
-function summarize(segments) {
-  const count = (st) => segments.filter((s) => s.status === st).length;
-  const total = segments.length;
-  const completed = count('COMPLETED');
-  return {
-    total,
-    completed,
-    failed: count('FAILED'),
-    pending: count('PENDING'),
-    processing: count('PROCESSING'),
-    percent: total ? Math.round((completed / total) * 100) : 0,
-  };
-}
-
 // Danh sách phong cách dịch
 router.get('/translation/styles', (req, res) => {
   res.json({ data: Object.keys(STYLE_GUIDES) });
@@ -132,7 +97,7 @@ router.get('/translation/usage', authenticate, async (req, res) => {
     const used = await usedToday(req.user.sub);
     return res.json({ data: { used, limit: DAILY_LIMIT, remaining: Math.max(DAILY_LIMIT - used, 0) } });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải thống kê lượt gọi AI', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải thống kê lượt gọi AI' });
   }
 });
 
@@ -148,9 +113,9 @@ router.get('/chapters/:id/segments', authenticate, async (req, res) => {
       where: { chapterId: chapter.id },
       orderBy: { orderIndex: 'asc' },
     });
-    return res.json({ chapterStatus: chapter.status, progress: summarize(segments), data: segments });
+    return res.json({ chapterStatus: chapter.status, progress: summarizeSegments(segments), data: segments });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải các đoạn dịch', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải các đoạn dịch' });
   }
 });
 
@@ -202,7 +167,7 @@ router.post('/chapters/:id/translate', authenticate, async (req, res) => {
     // Đoạn kẹt ở PROCESSING (server sập giữa chừng) được xử lý như chưa dịch
     const todo = segments.filter((s) => s.status !== 'COMPLETED');
     if (todo.length === 0) {
-      return res.json({ message: 'Tất cả các đoạn đã được dịch', progress: summarize(segments), data: chapter });
+      return res.json({ message: 'Tất cả các đoạn đã được dịch', progress: summarizeSegments(segments), data: chapter });
     }
 
     const remainingQuota = DAILY_LIMIT - (await usedToday(req.user.sub));
@@ -226,8 +191,9 @@ router.post('/chapters/:id/translate', authenticate, async (req, res) => {
       }
     }
 
-    const updated = await refreshChapter(chapter.id);
-    const progress = summarize(await prisma.chapterSegment.findMany({ where: { chapterId: chapter.id } }));
+    const state = await refreshChapter(chapter.id);
+    const updated = state.chapter;
+    const progress = state.summary;
 
     if (stopReason) {
       return res.status(502).json({
@@ -245,7 +211,7 @@ router.post('/chapters/:id/translate', authenticate, async (req, res) => {
       data: updated,
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xử lý dịch chương', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xử lý dịch chương' });
   }
 });
 
@@ -270,6 +236,7 @@ router.post('/segments/:id/retranslate', authenticate, async (req, res) => {
 
     const result = await translateSegment(segment, chapter, req.user.sub, style || chapter.translationStyle || 'natural');
     await refreshChapter(chapter.id);
+    await runQaForChapter(chapter.id);
     const fresh = await prisma.chapterSegment.findUnique({ where: { id: segment.id } });
 
     if (!result.ok) {
@@ -277,7 +244,7 @@ router.post('/segments/:id/retranslate', authenticate, async (req, res) => {
     }
     return res.json({ message: 'Đã dịch lại đoạn', data: fresh });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi dịch lại đoạn', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi dịch lại đoạn' });
   }
 });
 

@@ -3,6 +3,8 @@ const prisma = require('../prismaClient');
 const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
+const NOVEL_STATUSES = new Set(['DRAFT', 'ONGOING', 'COMPLETED']);
+const SUPPORTED_LANGUAGES = new Set(['zh', 'en', 'vi']);
 
 // Lấy danh sách tiểu thuyết (có phân trang, tìm kiếm, lọc)
 router.get('/', async (req, res) => {
@@ -46,7 +48,7 @@ router.get('/', async (req, res) => {
         orderBy: { updatedAt: 'desc' },
         include: {
           uploader: {
-            select: { id: true, displayName: true, email: true },
+            select: { id: true, displayName: true },
           },
           genres: {
             include: {
@@ -76,7 +78,31 @@ router.get('/', async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tải danh sách tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tải danh sách tiểu thuyết' });
+  }
+});
+
+// Danh sách truyện thuộc tài khoản hiện tại, dùng cho màn hình quản lý
+router.get('/mine', authenticate, async (req, res) => {
+  try {
+    const novels = await prisma.novel.findMany({
+      where: req.user.role === 'ADMIN' ? {} : { uploaderId: req.user.sub },
+      include: {
+        genres: { include: { genre: true } },
+        _count: { select: { chapters: true, glossaryTerms: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+    return res.json({
+      data: novels.map((novel) => ({
+        ...novel,
+        genres: novel.genres.map((item) => item.genre),
+        totalChapters: novel._count.chapters,
+        totalGlossaryTerms: novel._count.glossaryTerms,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Không thể tải danh sách truyện của bạn' });
   }
 });
 
@@ -89,7 +115,7 @@ router.get('/:id', async (req, res) => {
       where: { id },
       include: {
         uploader: {
-          select: { id: true, displayName: true, email: true },
+          select: { id: true, displayName: true },
         },
         genres: {
           include: {
@@ -122,7 +148,7 @@ router.get('/:id', async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi lấy chi tiết tiểu thuyết' });
   }
 });
 
@@ -143,11 +169,15 @@ router.post('/', authenticate, async (req, res) => {
   if (!title) {
     return res.status(400).json({ message: 'Tiêu đề tiểu thuyết không được để trống' });
   }
+  if (!NOVEL_STATUSES.has(status)) return res.status(400).json({ message: 'Trạng thái truyện không hợp lệ' });
+  if (!SUPPORTED_LANGUAGES.has(sourceLanguage) || !SUPPORTED_LANGUAGES.has(targetLanguage)) {
+    return res.status(400).json({ message: 'Ngôn ngữ nguồn hoặc đích không được hỗ trợ' });
+  }
 
   try {
     const novel = await prisma.novel.create({
       data: {
-        title,
+        title: title.trim(),
         originalTitle,
         author,
         description,
@@ -177,7 +207,7 @@ router.post('/', authenticate, async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi tạo tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi tạo tiểu thuyết' });
   }
 });
 
@@ -195,6 +225,16 @@ router.put('/:id', authenticate, async (req, res) => {
     status,
     genreIds,
   } = req.body;
+
+  if (status !== undefined && !NOVEL_STATUSES.has(status)) {
+    return res.status(400).json({ message: 'Trạng thái truyện không hợp lệ' });
+  }
+  if (sourceLanguage !== undefined && !SUPPORTED_LANGUAGES.has(sourceLanguage)) {
+    return res.status(400).json({ message: 'Ngôn ngữ nguồn không được hỗ trợ' });
+  }
+  if (targetLanguage !== undefined && !SUPPORTED_LANGUAGES.has(targetLanguage)) {
+    return res.status(400).json({ message: 'Ngôn ngữ đích không được hỗ trợ' });
+  }
 
   try {
     const existing = await prisma.novel.findUnique({ where: { id } });
@@ -244,7 +284,7 @@ router.put('/:id', authenticate, async (req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi cập nhật tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi cập nhật tiểu thuyết' });
   }
 });
 
@@ -266,7 +306,7 @@ router.delete('/:id', authenticate, async (req, res) => {
 
     return res.json({ message: 'Đã xóa tiểu thuyết thành công' });
   } catch (error) {
-    return res.status(500).json({ message: 'Lỗi khi xóa tiểu thuyết', error: error.message });
+    return res.status(500).json({ message: 'Lỗi khi xóa tiểu thuyết' });
   }
 });
 

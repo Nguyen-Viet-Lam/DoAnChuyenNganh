@@ -7,19 +7,27 @@
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev"
+    "prisma:migrate": "prisma migrate dev",
+    "test": "node --test",
+    "check": "npm run test && npx prisma validate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed"
   },
   "dependencies": {
-    "@google/genai": "^2.31.0",
+    "@google/genai": "^2.32.0",
     "@prisma/client": "6.1.0",
-    "bcrypt": "5.1.1",
-    "cors": "2.8.5",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "dotenv": "16.4.7",
-    "express": "4.21.2",
-    "jsonwebtoken": "9.0.2"
+    "express": "^4.22.3",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "nodemon": "3.1.9",
     "prisma": "6.1.0"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }

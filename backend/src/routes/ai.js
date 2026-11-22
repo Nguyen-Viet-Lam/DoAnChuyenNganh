@@ -17,7 +17,6 @@ router.get('/test-connection', authenticate, async (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Không thể kết nối với Gemini API',
-      error: error.message,
     });
   }
 });
@@ -41,7 +40,6 @@ router.post('/quick-translate', authenticate, async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: 'Lỗi khi thực hiện dịch thuật AI',
-      error: error.message,
     });
   }
 });

@@ -1,34 +1,43 @@
 import React from 'react';
-import { CheckCircle2, BookOpen, Sparkles, BookMarked, Save, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, BookOpen, BookMarked, Save, ScanSearch, Sparkles } from 'lucide-react';
 
 const STATUS_LABELS = {
   DRAFT: { text: 'Bản nháp', bg: 'bg-gray-100 text-gray-700 border-gray-300' },
   TRANSLATING: { text: 'Đang dịch...', bg: 'bg-blue-100 text-blue-700 border-blue-300' },
   PARTIAL: { text: 'Dịch một phần', bg: 'bg-amber-100 text-amber-700 border-amber-300' },
-  TRANSLATED: { text: 'Đã dịch xong', bg: 'bg-indigo-100 text-indigo-700 border-indigo-300' },
+  TRANSLATED: { text: 'Đã dịch xong', bg: 'bg-blue-100 text-blue-700 border-blue-300' },
   REVIEWED: { text: 'Đã duyệt', bg: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
   FAILED: { text: 'Lỗi dịch', bg: 'bg-rose-100 text-rose-700 border-rose-300' },
-  PUBLISHED: { text: 'Đã xuất bản', bg: 'bg-purple-100 text-purple-700 border-purple-300' },
+  PUBLISHED: { text: 'Đã xuất bản', bg: 'bg-cyan-100 text-cyan-800 border-cyan-300' },
 };
 
 export default function EditorHeader({
   chapter,
   novel,
   summary,
+  qaSummary,
   saveStatus,
   showGlossary,
   setShowGlossary,
+  showQa,
+  setShowQa,
   onCompleteReview,
   isCompleting,
+  onTranslateChapter,
+  isTranslating,
+  onBack,
 }) {
   const statusInfo = STATUS_LABELS[chapter?.status] || STATUS_LABELS.DRAFT;
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-sm px-6 py-4">
+    <header className="sticky top-[73px] z-30 bg-white border-b border-slate-200 shadow-sm px-4 md:px-6 py-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Title & Info */}
-        <div className="flex items-start gap-3">
-          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+        <div className="flex items-start gap-3 min-w-0">
+          <button type="button" onClick={onBack} aria-label="Trở lại danh sách chương" className="w-11 h-11 shrink-0 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center">
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+          <div className="p-2.5 bg-blue-50 text-blue-700 rounded-xl hidden sm:block">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
@@ -40,7 +49,7 @@ export default function EditorHeader({
                 {statusInfo.text}
               </span>
             </div>
-            <h1 className="text-lg font-bold text-slate-800 mt-0.5">
+            <h1 className="text-lg font-bold text-slate-900 mt-0.5 truncate">
               Chương {chapter?.chapterNumber || 1}: {chapter?.title || 'Chưa đặt tên'}
             </h1>
           </div>
@@ -64,7 +73,7 @@ export default function EditorHeader({
             <span className="text-slate-600 font-medium">Tiến độ:</span>
             <div className="w-20 bg-slate-200 rounded-full h-2 overflow-hidden">
               <div
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                className="bg-blue-700 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${summary?.percent || 0}%` }}
               />
             </div>
@@ -78,12 +87,41 @@ export default function EditorHeader({
             onClick={() => setShowGlossary(!showGlossary)}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
               showGlossary
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                ? 'bg-blue-50 border-blue-300 text-blue-800'
                 : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <BookMarked className="w-4 h-4 text-indigo-600" />
+            <BookMarked className="w-4 h-4 text-blue-700" />
             <span>Thuật ngữ</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowQa(!showQa)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium border transition-colors ${
+              showQa
+                ? 'bg-blue-50 border-blue-300 text-blue-800'
+                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            <ScanSearch className="w-4 h-4" />
+            <span>QA</span>
+            {(qaSummary?.errors || qaSummary?.warnings) > 0 && (
+              <span className="min-w-5 h-5 px-1 rounded-full bg-rose-700 text-white text-[10px] flex items-center justify-center">
+                {(qaSummary?.errors || 0) + (qaSummary?.warnings || 0)}
+              </span>
+            )}
+          </button>
+
+          {/* Complete review button */}
+          <button
+            type="button"
+            disabled={isTranslating}
+            onClick={onTranslateChapter}
+            className="flex min-h-11 items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-60"
+          >
+            <Sparkles className={`h-4 w-4 ${isTranslating ? 'animate-spin' : ''}`} />
+            <span>{isTranslating ? 'Đang dịch' : 'Dịch tiếp'}</span>
           </button>
 
           {/* Complete review button */}
@@ -94,7 +132,7 @@ export default function EditorHeader({
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold text-white transition-all shadow-sm ${
               chapter?.status === 'REVIEWED'
                 ? 'bg-emerald-600 opacity-90 cursor-default'
-                : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'
+                : 'bg-blue-700 hover:bg-blue-800 active:translate-y-px'
             }`}
           >
             <CheckCircle2 className="w-4 h-4" />
